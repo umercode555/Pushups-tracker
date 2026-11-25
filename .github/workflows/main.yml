@@ -23,11 +23,20 @@ jobs:
         with:
           gradle-version: 8.9
 
+      - name: Find project folder
+        id: find
+        run: |
+          FILE=$(find . -name settings.gradle.kts -not -path './.git/*' | head -n 1)
+          echo "Found: $FILE"
+          echo "dir=$(dirname "$FILE")" >> "$GITHUB_OUTPUT"
+
       - name: Build debug APK
+        working-directory: ${{ steps.find.outputs.dir }}
         run: gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk Pushr.apk
+      - name: Copy APK
+        working-directory: ${{ steps.find.outputs.dir }}
+        run: cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/Pushr.apk"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -35,7 +44,7 @@ jobs:
           name: Pushr-APK
           path: Pushr.apk
 
-      - name: Publish release (direct phone download)
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
