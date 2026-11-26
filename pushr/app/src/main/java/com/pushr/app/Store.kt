@@ -34,7 +34,17 @@ object Store {
         c.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putString(KEY, a.toString()).apply()
     }
 
+    /** The web UI reports today's total here so the 12:00 PM notification stays correct. */
+    fun setToday(c: Context, n: Int) {
+        c.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit()
+            .putString("today_date", LocalDate.now().toString())
+            .putInt("today_total", n)
+            .apply()
+    }
+
     fun todayTotal(c: Context): Int {
+        val p = c.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+        if (p.getString("today_date", "") == LocalDate.now().toString()) return p.getInt("today_total", 0)
         val t = LocalDate.now()
         return all(c).filter { day(it.start) == t }.sumOf { it.count }
     }
